@@ -5,7 +5,6 @@ const cookie = $('cookie');
 const copy = $('copy');
 const status = $('status');
 const paper = $('paper');
-const unfold = $('unfold');
 const content = $('paper-content');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mini = new URLSearchParams(location.search).get('mini') === '1';
@@ -25,7 +24,21 @@ function announce(message, visible = false) {
 
 function setBusy(value) {
   busy = value;
-  draw.disabled = unfold.disabled = $('redraw').disabled = value;
+  draw.disabled = $('redraw').disabled = value;
+}
+
+async function revealFortune() {
+  stage.classList.add('revealed');
+  content.hidden = false;
+  await pause(850);
+  state = 'open';
+  $('hint').textContent = '쿠키 안에 있던, 당신을 위한 한마디.';
+  draw.textContent = '하나 더 뽑기';
+  copy.hidden = false;
+  $('redraw').hidden = true;
+  setBusy(false);
+  announce(currentFortune);
+  $('close-paper').focus({preventScroll:true});
 }
 
 async function crackCookie() {
@@ -35,12 +48,10 @@ async function crackCookie() {
   ++drawCount;
   copy.hidden = $('redraw').hidden = true;
   content.hidden = true;
-  unfold.hidden = false;
   paper.hidden = true;
-  $('fortune').textContent = '';
   cookie.disabled = true;
-  stage.classList.remove('drawn', 'unfolded');
-  $('hint').textContent = '쿠키 속 작은 쪽지를 꺼내는 중…';
+  stage.classList.remove('drawn', 'pulling', 'revealed', 'tucked');
+  $('hint').textContent = '쿠키 속 작은 행운을 꺼내는 중…';
   announce('');
   if (lastIndex !== -1) await pause(500);
   let index;
@@ -51,64 +62,48 @@ async function crackCookie() {
   } while (index === lastIndex && FORTUNES.length > 1);
   lastIndex = index;
   currentFortune = FORTUNES[index].text;
+  $('fortune').textContent = currentFortune;
   stage.classList.add('cracking');
-  await pause(300);
+  await pause(320);
+  paper.hidden = false;
   stage.classList.remove('cracking');
   stage.classList.add('drawn');
-  await pause(300);
-  paper.hidden = false;
-  await pause(500);
-  state = 'folded';
-  $('hint').textContent = '작은 쪽지가 나왔어요. 살며시 펼쳐 볼까요?';
-  draw.textContent = '쪽지 펼치기';
-  $('redraw').hidden = false;
-  setBusy(false);
-  announce('접힌 쪽지가 나왔어요. 펼쳐서 운세를 확인해 보세요.');
-  unfold.focus({preventScroll:true});
+  // First show the narrow folded slip between the two hollow shells.
+  await pause(850);
+  stage.classList.add('pulling');
+  // Pull it out of the shell before letting the creases relax.
+  await pause(850);
+  await revealFortune();
 }
 
-async function unfoldFortune() {
-  if (busy || state !== 'folded') return;
-  setBusy(true);
-  unfold.hidden = true;
-  stage.classList.add('unfolded');
-  await pause(650);
-  $('fortune').textContent = currentFortune;
-  content.hidden = false;
-  state = 'open';
-  $('hint').textContent = '오늘 당신에게 도착한 작은 행운이에요.';
-  draw.textContent = '하나 더 뽑기';
-  copy.hidden = false;
-  $('redraw').hidden = true;
-  setBusy(false);
-  announce(currentFortune);
-  $('close-paper').focus({preventScroll:true});
-}
-
-async function foldFortune() {
+function closeFortune() {
   if (busy || state !== 'open') return;
-  setBusy(true);
+  state = 'closed';
   content.hidden = true;
+  stage.classList.remove('revealed');
+  stage.classList.add('tucked');
   copy.hidden = true;
-  announce('');
-  stage.classList.remove('unfolded');
-  await pause(650);
-  state = 'folded';
-  unfold.hidden = false;
-  $('hint').textContent = '잘 접어 두었어요. 다시 펼쳐도 같은 행운이에요.';
-  draw.textContent = '쪽지 다시 펼치기';
+  draw.textContent = '문구 다시 보기';
   $('redraw').hidden = false;
-  setBusy(false);
-  unfold.focus({preventScroll:true});
+  $('hint').textContent = '잠시 접어 둘게요. 같은 문구를 다시 볼 수 있어요.';
+  announce('');
+  draw.focus({preventScroll:true});
 }
 
-draw.addEventListener('click', () => state === 'folded' ? unfoldFortune() : crackCookie());
+async function openOrDraw() {
+  if (busy) return;
+  if (state !== 'closed') return crackCookie();
+  setBusy(true);
+  stage.classList.remove('tucked');
+  await revealFortune();
+}
+
+draw.addEventListener('click', openOrDraw);
 cookie.addEventListener('click', crackCookie);
-unfold.addEventListener('click', unfoldFortune);
-$('close-paper').addEventListener('click', foldFortune);
+$('close-paper').addEventListener('click', closeFortune);
 $('redraw').addEventListener('click', crackCookie);
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') foldFortune();
+  if (event.key === 'Escape') closeFortune();
 });
 copy.addEventListener('click', async () => {
   const copiedDraw = drawCount;
