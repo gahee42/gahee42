@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7ee">
+  <meta name="description" content="오늘의 운세는, 두근! 쿠키 속 작은 행운을 만나 보세요.">
+  <title>쿠키 뽑기 · gahee42</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="fortunes.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="card" aria-labelledby="title">
+    <header><a href="https://github.com/gahee42" aria-label="gahee42 GitHub 프로필">FORTUNE CLUB ✶</a><button class="window-button" id="small-window" aria-label="작은 창으로 열기" title="작은 창으로 열기">↗ <span>작은 창</span></button></header>
+    <div class="intro"><div class="moon-seal" aria-hidden="true">✳<span>✦</span></div><span class="eyebrow">가볍게 열어보는 오늘의 작은 행운</span><h1 id="title">오늘의 운세는 <span class="title-aside">두근!</span></h1><p id="hint">쿠키 속에 어떤 행운이 숨어 있을까요?</p></div>
+    <div class="stage" id="stage">
+      <div class="halo" aria-hidden="true"></div><span class="spark spark-one" aria-hidden="true">✦</span><span class="spark spark-two" aria-hidden="true">✧</span>
+      <div class="paper" id="paper" aria-hidden="true"><button class="close-paper" id="close-paper" aria-label="운세 문구 닫기" tabindex="-1">×</button><span class="paper-label">✶ A LITTLE LUCK ✶</span><p id="fortune"></p><span class="paper-mark">마음에 드는 말은 챙겨 가기!</span></div>
+      <button id="cookie" class="cookie" aria-label="쿠키 뽑기" aria-describedby="hint">
+        <span class="cookie-art" aria-hidden="true"><img class="cookie-left" src="fortune-cookie-illustrated.png" alt=""><img class="cookie-right" src="fortune-cookie-illustrated.png" alt=""></span>
+      </button>
+      <div class="crumbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="crunch" aria-hidden="true">뽀각!</span>
+      <span class="tap-note" aria-hidden="true">살짝 눌러 주세요 <span>↑</span></span>
+    </div>
+    <div class="actions"><button class="primary" id="draw">쿠키 뽑기 <span aria-hidden="true">✦</span></button><button class="copy" id="copy" hidden>문구 복사</button><button class="copy" id="redraw" hidden>하나 더 뽑기</button></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <footer>좋은 말만 챙겨 가요.<span>A LITTLE LUCK · BY GAHEE42</span></footer>
+  </main>
+</body>
+</html>
