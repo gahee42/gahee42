@@ -16,6 +16,8 @@ let currentFortune = '';
 let drawCount = 0;
 let popupWindow;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : ms));
+const cookieReady = Promise.all([...cookie.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+const finishMotion = () => Promise.all(stage.getAnimations({subtree:true}).map(animation => animation.finished.catch(() => {})));
 
 function announce(message, visible = false) {
   status.classList.toggle('announcement', !visible);
@@ -27,11 +29,10 @@ function setBusy(value) {
   draw.disabled = $('redraw').disabled = value;
 }
 
-async function revealFortune() {
-  stage.classList.add('revealed');
-  content.hidden = false;
-  await pause(850);
+function revealFortune() {
   state = 'open';
+  content.removeAttribute('aria-hidden');
+  $('close-paper').hidden = false;
   $('hint').textContent = '쿠키 안에 있던, 당신을 위한 한마디.';
   draw.textContent = '하나 더 뽑기';
   copy.hidden = false;
@@ -47,13 +48,23 @@ async function crackCookie() {
   state = 'drawing';
   ++drawCount;
   copy.hidden = $('redraw').hidden = true;
-  content.hidden = true;
-  paper.hidden = true;
+  $('close-paper').hidden = true;
+  content.setAttribute('aria-hidden', 'true');
   cookie.disabled = true;
-  stage.classList.remove('drawn', 'pulling', 'revealed', 'tucked');
-  $('hint').textContent = '쿠키 속 작은 행운을 꺼내는 중…';
   announce('');
-  if (lastIndex !== -1) await pause(500);
+  await cookieReady;
+  if (lastIndex !== -1) {
+    stage.classList.add('resetting');
+    await pause(180);
+  }
+  paper.hidden = true;
+  stage.classList.remove('drawn', 'flowing', 'tucked');
+  if (lastIndex !== -1) {
+    // Settle the hidden scene before fading the next cookie back in.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    stage.classList.remove('resetting');
+    await pause(180);
+  }
   let index;
   do {
     const value = new Uint32Array(1);
@@ -63,24 +74,21 @@ async function crackCookie() {
   lastIndex = index;
   currentFortune = FORTUNES[index].text;
   $('fortune').textContent = currentFortune;
-  stage.classList.add('cracking');
-  await pause(320);
+  content.hidden = false;
   paper.hidden = false;
-  stage.classList.remove('cracking');
-  stage.classList.add('drawn');
-  // First show the narrow folded slip between the two hollow shells.
-  await pause(850);
-  stage.classList.add('pulling');
-  // Pull it out of the shell before letting the creases relax.
-  await pause(850);
-  await revealFortune();
+  $('hint').textContent = '쿠키 속 작은 행운을 꺼내는 중…';
+  // Cookie, paper and printed text share one overlapping timeline.
+  stage.classList.add('drawn', 'flowing');
+  await finishMotion();
+  stage.classList.remove('flowing');
+  revealFortune();
 }
 
 function closeFortune() {
   if (busy || state !== 'open') return;
   state = 'closed';
-  content.hidden = true;
-  stage.classList.remove('revealed');
+  content.setAttribute('aria-hidden', 'true');
+  $('close-paper').hidden = true;
   stage.classList.add('tucked');
   copy.hidden = true;
   draw.textContent = '문구 다시 보기';
@@ -95,7 +103,8 @@ async function openOrDraw() {
   if (state !== 'closed') return crackCookie();
   setBusy(true);
   stage.classList.remove('tucked');
-  await revealFortune();
+  await finishMotion();
+  revealFortune();
 }
 
 draw.addEventListener('click', openOrDraw);
