@@ -4,68 +4,45 @@ const draw = $('draw');
 const cookie = $('cookie');
 const copy = $('copy');
 const status = $('status');
-const mini = new URLSearchParams(location.search).get('mini') === '1';
+const paper = $('paper');
+const unfold = $('unfold');
+const content = $('paper-content');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mini = new URLSearchParams(location.search).get('mini') === '1';
 document.body.classList.toggle('mini', mini);
+let state = 'idle';
 let busy = false;
 let lastIndex = -1;
 let currentFortune = '';
 let drawCount = 0;
-let isOpen = false;
-let returnFocus = draw;
+let popupWindow;
+const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : ms));
 
-function closeFortune() {
-  if (busy || !isOpen) return;
-  isOpen = false;
-  stage.classList.remove('opened');
-  $('paper').setAttribute('aria-hidden', 'true');
-  $('close-paper').tabIndex = -1;
-  cookie.disabled = false;
-  cookie.setAttribute('aria-label', '같은 운세 다시 보기');
-  draw.textContent = '문구 다시 보기';
-  copy.hidden = true;
-  $('redraw').hidden = false;
-  $('hint').textContent = '잠깐 접어 둘게요. 다시 봐도 같은 문구예요.';
-  status.textContent = '';
-  returnFocus.focus();
+function announce(message, visible = false) {
+  status.classList.toggle('announcement', !visible);
+  status.textContent = message;
 }
 
-function revealFortune() {
-  isOpen = true;
-  stage.classList.add('opened');
-  $('paper').setAttribute('aria-hidden', 'false');
-  $('close-paper').tabIndex = 0;
-  cookie.disabled = true;
-  $('hint').textContent = '오늘의 운세 도착! 좋은 기운만 챙겨 가요.';
-  draw.innerHTML = '하나 더 뽑기 <span aria-hidden="true">↻</span>';
-  copy.hidden = false;
-  $('redraw').hidden = true;
-  status.classList.add('announcement');
-  status.textContent = currentFortune;
-  $('close-paper').focus({preventScroll:true});
-}
-
-function openOrDraw() {
-  if (busy) return;
-  returnFocus = document.activeElement === cookie ? cookie : draw;
-  if (currentFortune && !isOpen) revealFortune();
-  else crackCookie();
+function setBusy(value) {
+  busy = value;
+  draw.disabled = unfold.disabled = $('redraw').disabled = value;
 }
 
 async function crackCookie() {
   if (busy) return;
-  busy = true;
+  setBusy(true);
+  state = 'drawing';
   ++drawCount;
-  isOpen = false;
-  draw.disabled = cookie.disabled = true;
-  copy.hidden = true;
-  $('redraw').hidden = true;
-  $('close-paper').tabIndex = -1;
-  status.textContent = '';
-  $('paper').setAttribute('aria-hidden', 'true');
-  stage.classList.remove('opened', 'cracking');
-  $('hint').textContent = '쿠키 속 행운을 꺼내는 중…';
-  if (lastIndex !== -1) await new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : 650));
+  copy.hidden = $('redraw').hidden = true;
+  content.hidden = true;
+  unfold.hidden = false;
+  paper.hidden = true;
+  $('fortune').textContent = '';
+  cookie.disabled = true;
+  stage.classList.remove('drawn', 'unfolded');
+  $('hint').textContent = '쿠키 속 작은 쪽지를 꺼내는 중…';
+  announce('');
+  if (lastIndex !== -1) await pause(500);
   let index;
   do {
     const value = new Uint32Array(1);
@@ -74,51 +51,95 @@ async function crackCookie() {
   } while (index === lastIndex && FORTUNES.length > 1);
   lastIndex = index;
   currentFortune = FORTUNES[index].text;
-  $('fortune').textContent = currentFortune;
   stage.classList.add('cracking');
-  await new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : 350));
+  await pause(300);
   stage.classList.remove('cracking');
-  stage.classList.add('opened');
-  await new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : 750));
-  revealFortune();
-  draw.disabled = false;
-  busy = false;
+  stage.classList.add('drawn');
+  await pause(300);
+  paper.hidden = false;
+  await pause(500);
+  state = 'folded';
+  $('hint').textContent = '작은 쪽지가 나왔어요. 살며시 펼쳐 볼까요?';
+  draw.textContent = '쪽지 펼치기';
+  $('redraw').hidden = false;
+  setBusy(false);
+  announce('접힌 쪽지가 나왔어요. 펼쳐서 운세를 확인해 보세요.');
+  unfold.focus({preventScroll:true});
 }
 
-draw.addEventListener('click', openOrDraw);
-cookie.addEventListener('click', openOrDraw);
-$('close-paper').addEventListener('click', closeFortune);
-$('redraw').addEventListener('click', () => { returnFocus = draw; crackCookie(); });
+async function unfoldFortune() {
+  if (busy || state !== 'folded') return;
+  setBusy(true);
+  unfold.hidden = true;
+  stage.classList.add('unfolded');
+  await pause(650);
+  $('fortune').textContent = currentFortune;
+  content.hidden = false;
+  state = 'open';
+  $('hint').textContent = '오늘 당신에게 도착한 작은 행운이에요.';
+  draw.textContent = '하나 더 뽑기';
+  copy.hidden = false;
+  $('redraw').hidden = true;
+  setBusy(false);
+  announce(currentFortune);
+  $('close-paper').focus({preventScroll:true});
+}
+
+async function foldFortune() {
+  if (busy || state !== 'open') return;
+  setBusy(true);
+  content.hidden = true;
+  copy.hidden = true;
+  announce('');
+  stage.classList.remove('unfolded');
+  await pause(650);
+  state = 'folded';
+  unfold.hidden = false;
+  $('hint').textContent = '잘 접어 두었어요. 다시 펼쳐도 같은 행운이에요.';
+  draw.textContent = '쪽지 다시 펼치기';
+  $('redraw').hidden = false;
+  setBusy(false);
+  unfold.focus({preventScroll:true});
+}
+
+draw.addEventListener('click', () => state === 'folded' ? unfoldFortune() : crackCookie());
+cookie.addEventListener('click', crackCookie);
+unfold.addEventListener('click', unfoldFortune);
+$('close-paper').addEventListener('click', foldFortune);
+$('redraw').addEventListener('click', crackCookie);
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && isOpen) closeFortune();
+  if (event.key === 'Escape') foldFortune();
 });
 copy.addEventListener('click', async () => {
   const copiedDraw = drawCount;
   try {
     await navigator.clipboard.writeText(currentFortune);
-    if (copiedDraw !== drawCount) return;
-    status.classList.remove('announcement');
-    status.textContent = '작은 행운을 복사했어요.';
+    if (copiedDraw !== drawCount || state !== 'open') return;
+    announce('작은 행운을 복사했어요.', true);
   } catch {
-    status.classList.remove('announcement');
-    status.textContent = '문구를 길게 누르거나 드래그해서 복사해 주세요.';
+    if (copiedDraw !== drawCount || state !== 'open') return;
+    announce('문구를 길게 누르거나 드래그해서 복사해 주세요.', true);
   }
 });
 
 $('small-window').addEventListener('click', () => {
-  const width = Math.min(480, screen.availWidth);
+  if (popupWindow && !popupWindow.closed) {
+    popupWindow.focus();
+    return;
+  }
+  const width = Math.min(440, screen.availWidth);
   const height = Math.min(660, screen.availHeight);
   const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
   const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
   const url = new URL(location.href);
   url.searchParams.set('mini', '1');
-  let popup;
-  try { popup = window.open(url.href, 'gahee42-fortune-cookie', `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`); } catch {}
-  status.classList.remove('announcement');
-  if (popup) {
-    popup.focus();
-    status.textContent = '별도 창으로 열었어요. 창 모양은 브라우저에 따라 달라요.';
+  try {
+    popupWindow = window.open(url.href, 'gahee42-fortune-cookie', `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  } catch { popupWindow = null; }
+  if (popupWindow) {
+    popupWindow.focus();
+    announce('새 탭으로 열렸다면 데스크톱 브라우저에서 작은 창을 이용해 주세요.', true);
   } else {
-    status.textContent = '팝업이 차단됐어요. 이 화면에서도 바로 쿠키를 뽑을 수 있어요.';
+    announce('팝업이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.', true);
   }
 });
