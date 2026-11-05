@@ -7,14 +7,11 @@ const status = $('status');
 const paper = $('paper');
 const content = $('paper-content');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const mini = new URLSearchParams(location.search).get('mini') === '1';
-document.body.classList.toggle('mini', mini);
 let state = 'idle';
 let busy = false;
 let lastIndex = -1;
 let currentFortune = '';
 let drawCount = 0;
-let popupWindow;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : ms));
 const cookieReady = Promise.all([...cookie.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
 const finishMotion = () => Promise.all(stage.getAnimations({subtree:true}).map(animation => animation.finished.catch(() => {})));
@@ -42,29 +39,47 @@ function revealFortune() {
   $('close-paper').focus({preventScroll:true});
 }
 
-async function crackCookie() {
+async function prepareCookie() {
   if (busy) return;
+  setBusy(true);
+  ++drawCount;
+  cookie.disabled = true;
+  copy.hidden = $('redraw').hidden = true;
+  $('close-paper').hidden = true;
+  content.setAttribute('aria-hidden', 'true');
+  announce('');
+  stage.classList.add('resetting');
+  await pause(180);
+  paper.hidden = true;
+  content.hidden = true;
+  $('fortune').textContent = '';
+  currentFortune = '';
+  stage.classList.remove('drawn', 'flowing', 'tucked');
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  stage.classList.remove('resetting');
+  await pause(180);
+  state = 'idle';
+  draw.textContent = '쿠키 깨기';
+  $('hint').textContent = '새 쿠키가 왔어요. 살짝 눌러 깨 보세요.';
+  cookie.disabled = false;
+  setBusy(false);
+  cookie.focus({preventScroll:true});
+}
+
+async function crackCookie() {
+  if (busy || state !== 'idle') return;
   setBusy(true);
   state = 'drawing';
   ++drawCount;
   copy.hidden = $('redraw').hidden = true;
+  copy.classList.remove('copied');
+  copy.setAttribute('aria-label', '문구 복사');
+  copy.title = '문구 복사';
   $('close-paper').hidden = true;
   content.setAttribute('aria-hidden', 'true');
   cookie.disabled = true;
   announce('');
   await cookieReady;
-  if (lastIndex !== -1) {
-    stage.classList.add('resetting');
-    await pause(180);
-  }
-  paper.hidden = true;
-  stage.classList.remove('drawn', 'flowing', 'tucked');
-  if (lastIndex !== -1) {
-    // Settle the hidden scene before fading the next cookie back in.
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    stage.classList.remove('resetting');
-    await pause(180);
-  }
   let index;
   do {
     const value = new Uint32Array(1);
@@ -100,7 +115,8 @@ function closeFortune() {
 
 async function openOrDraw() {
   if (busy) return;
-  if (state !== 'closed') return crackCookie();
+  if (state === 'idle') return crackCookie();
+  if (state === 'open') return prepareCookie();
   setBusy(true);
   stage.classList.remove('tucked');
   await finishMotion();
@@ -110,7 +126,7 @@ async function openOrDraw() {
 draw.addEventListener('click', openOrDraw);
 cookie.addEventListener('click', crackCookie);
 $('close-paper').addEventListener('click', closeFortune);
-$('redraw').addEventListener('click', crackCookie);
+$('redraw').addEventListener('click', prepareCookie);
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') closeFortune();
 });
@@ -119,31 +135,12 @@ copy.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(currentFortune);
     if (copiedDraw !== drawCount || state !== 'open') return;
-    announce('작은 행운을 복사했어요.', true);
+    copy.classList.add('copied');
+    copy.setAttribute('aria-label', '복사됨');
+    copy.title = '복사됨';
+    announce('작은 행운을 복사했어요.');
   } catch {
     if (copiedDraw !== drawCount || state !== 'open') return;
     announce('문구를 길게 누르거나 드래그해서 복사해 주세요.', true);
-  }
-});
-
-$('small-window').addEventListener('click', () => {
-  if (popupWindow && !popupWindow.closed) {
-    popupWindow.focus();
-    return;
-  }
-  const width = Math.min(440, screen.availWidth);
-  const height = Math.min(660, screen.availHeight);
-  const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
-  const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
-  const url = new URL(location.href);
-  url.searchParams.set('mini', '1');
-  try {
-    popupWindow = window.open(url.href, 'gahee42-fortune-cookie', `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-  } catch { popupWindow = null; }
-  if (popupWindow) {
-    popupWindow.focus();
-    announce('새 탭으로 열렸다면 데스크톱 브라우저에서 작은 창을 이용해 주세요.', true);
-  } else {
-    announce('팝업이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.', true);
   }
 });

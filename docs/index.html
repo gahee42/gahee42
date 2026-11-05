@@ -14,7 +14,6 @@
   <main class="card" aria-labelledby="title">
     <header>
       <a href="https://github.com/gahee42" aria-label="gahee42 GitHub 프로필">FORTUNE CLUB ✶</a>
-      <button class="window-button" id="small-window" aria-label="브라우저의 별도 작은 창으로 열기" title="별도 브라우저 창으로 열기">↗ <span>작은 창</span></button>
     </header>
     <div class="intro">
       <div class="moon-seal" aria-hidden="true">✳<span>✦</span></div>
@@ -31,7 +30,7 @@
           <button class="close-paper" id="close-paper" aria-label="운세 문구 닫기">×</button>
         </div>
       </div>
-      <button id="cookie" class="cookie" aria-label="쿠키 뽑기" aria-describedby="hint">
+      <button id="cookie" class="cookie" aria-label="쿠키 깨기" aria-describedby="hint">
         <span class="cookie-art" aria-hidden="true"><img class="cookie-left" src="fortune-cookie-illustrated.png" alt=""><img class="cookie-right" src="fortune-cookie-illustrated.png" alt=""></span>
         <span class="cookie-broken" aria-hidden="true"><img class="broken-left" src="fortune-cookie-broken.png" alt=""><img class="broken-right" src="fortune-cookie-broken.png" alt=""></span>
       </button>
@@ -39,8 +38,8 @@
       <span class="tap-note" aria-hidden="true">살짝 눌러 주세요 <span>↑</span></span>
     </div>
     <div class="actions">
-      <button class="primary" id="draw">쿠키 뽑기 <span aria-hidden="true">✦</span></button>
-      <button class="copy" id="copy" hidden>문구 복사</button>
+      <button class="primary" id="draw">쿠키 깨기 <span aria-hidden="true">✦</span></button>
+      <button class="copy-icon" id="copy" aria-label="문구 복사" title="문구 복사" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="copy-mark"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/></g><path class="copied-check" d="m5 12 4 4L19 6"/></svg></button>
       <button class="copy" id="redraw" hidden>하나 더 뽑기</button>
     </div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
