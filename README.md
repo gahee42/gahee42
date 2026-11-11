@@ -2,16 +2,6 @@
 
 들러 주셔서 반가워요. 오늘의 쿠키 하나, 가져가세요!
 
-<table>
-  <tr>
-    <td align="center" width="260">
-      <sub>FORTUNE CLUB ✶</sub><br>
-      <strong>오늘의 운세는 <sup>두근!</sup></strong><br>
-      <a href="https://gahee42.github.io/gahee42/">
-        <img src="docs/fortune-cookie-illustrated.png" width="160" height="160" alt="따뜻한 금빛 포춘쿠키 — 눌러서 오늘의 운세 보기"><br>
-        <strong>쿠키 뽑기 ↗</strong>
-      </a><br>
-      <sub>쿠키를 눌러 작은 행운을 만나 보세요.</sub>
-    </td>
-  </tr>
-</table>
+<a href="https://gahee42.github.io/gahee42/">
+  <img src="assets/fortune-cookie-preview.gif" width="260" height="310" alt="오늘의 운세는 두근! 아이보리 카드 안에서 살짝 흔들리는 포춘쿠키 — 눌러서 운세 보기">
+</a>
