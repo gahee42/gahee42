@@ -30,8 +30,8 @@ h1 .title-aside{display:inline-block;font-size:14px;letter-spacing:-.3px;font-we
 .stage.drawn .broken-left{transform:translate(-24px,-21px) rotate(-10deg) scaleY(1.06)}.stage.drawn .broken-right{transform:translate(24px,-21px) rotate(10deg) scaleY(1.06)}
 .stage.drawn .cookie{pointer-events:none}.stage.drawn .tap-note,.stage.drawn .spark{opacity:0}.stage.drawn .halo{opacity:.5}
 .tap-note{position:absolute;bottom:5px;color:#7b896f;font-size:10px;transition:opacity .3s}.tap-note span{margin-left:6px}
-/* A narrow paper slip begins behind the shells, slides out, then uncurls. */
-.paper{--travel:80px;position:absolute;top:96px;width:94%;min-height:72px;z-index:1;background:linear-gradient(95deg,#eee9d9 0%,#fffef5 6%,#fffef5 31%,#eeeada 33%,#fffef5 36%,#fffef5 65%,#f1eddf 67%,#fffef5 70%,#faf7eb 97%,#e8e3d3);border-top:1px solid #eeeadd;border-bottom:1px solid #e9e5d8;border-radius:1px 5px 3px 1px;box-shadow:1px 5px 8px #64583720;transform:perspective(700px) translate3d(0,var(--travel),0) rotateX(0deg) rotateZ(-2deg) scaleX(1);transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;transform-origin:50% 50%}
+/* The fortune slip stays above the shells from its first visible frame. */
+.paper{--travel:80px;position:absolute;top:96px;width:94%;min-height:72px;z-index:3;background:linear-gradient(95deg,#eee9d9 0%,#fffef5 6%,#fffef5 31%,#eeeada 33%,#fffef5 36%,#fffef5 65%,#f1eddf 67%,#fffef5 70%,#faf7eb 97%,#e8e3d3);border-top:1px solid #eeeadd;border-bottom:1px solid #e9e5d8;border-radius:1px 5px 3px 1px;box-shadow:1px 5px 8px #64583720;transform:perspective(700px) translate3d(0,var(--travel),0) rotateX(0deg) rotateZ(-2deg) scaleX(1);transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .3s;transform-origin:50% 50%}
 .paper:before,.paper:after{content:"";position:absolute;top:1px;bottom:1px;width:7px;pointer-events:none}.paper:before{left:0;background:linear-gradient(90deg,#e6e1d0,transparent);clip-path:polygon(0 0,100% 4%,80% 94%,0 100%)}.paper:after{right:0;background:linear-gradient(270deg,#e9e4d4,transparent);border-radius:0 5px 5px 0}
 .paper-content{position:relative;min-height:72px;padding:14px 23px;text-align:center;display:flex;align-items:center;justify-content:center}
 .paper-content p{font-family:"AppleMyungjo","Batang",Georgia,serif;font-size:15px;font-weight:700;line-height:1.65;word-break:keep-all;margin:0;color:#4b4c40;filter:blur(0);transition:filter .5s}
@@ -47,7 +47,7 @@ h1 .title-aside{display:inline-block;font-size:14px;letter-spacing:-.3px;font-we
 footer{text-align:center;color:#7c8b72;border-top:1px solid #e4e9d8;font-size:11px;padding-top:16px}footer span{display:block;font:8px -apple-system,sans-serif;letter-spacing:1.5px;margin-top:8px;color:#96a18a}
 .crumbs{position:absolute;inset:0;pointer-events:none;z-index:4}.crumbs i{position:absolute;top:115px;left:50%;width:5px;height:7px;background:#d59c51;opacity:0;border-radius:2px}.crumbs i:nth-child(1){--x:-90px;--y:-55px;--r:150deg}.crumbs i:nth-child(2){--x:84px;--y:-46px;--r:-100deg}.crumbs i:nth-child(3){--x:-120px;--y:65px;--r:250deg}.crumbs i:nth-child(4){--x:125px;--y:44px;--r:-220deg}.stage.flowing .crumbs i{animation:crumb .65s .18s ease-out both}
 /* One physical sequence: release tension, separate the shells, slide the slip out.
-   The paper stays behind the shells; there is no foreground layer swap. */
+   The paper stays in front of the shells; there is no mid-motion layer swap. */
 .stage.flowing .cookie-art{opacity:1;transform:none;transition:none}
 .stage.flowing .cookie-left{animation:closed-left .52s cubic-bezier(.32,0,.25,1) both}
 .stage.flowing .cookie-right{animation:closed-right .52s cubic-bezier(.32,0,.25,1) both}
